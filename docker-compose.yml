@@ -1,11 +1,15 @@
-version: '3.8'
+
 
 services:
+  # ===== BACKEND DJANGO =====
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: tempo_backend
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - .:/app
+      - ./backend:/app
       - static_volume:/app/staticfiles
     ports:
       - "8000:8000"
@@ -26,8 +30,10 @@ services:
       retries: 3
       start_period: 40s
 
+  # ===== BASE DE DONNÉES POSTGRES =====
   db:
-    image: postgres:13
+    image: postgis/postgis:16-3.4
+    container_name: tempo_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
@@ -42,8 +48,10 @@ services:
       timeout: 10s
       retries: 5
 
+  # ===== REDIS =====
   redis:
     image: redis:7-alpine
+    container_name: tempo_redis
     ports:
       - "6379:6379"
     healthcheck:
@@ -52,11 +60,15 @@ services:
       timeout: 10s
       retries: 3
 
+  # ===== CELERY WORKER =====
   celery:
-    build: .
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: tempo_celery
     command: celery -A backend worker --loglevel=info
     volumes:
-      - .:/app
+      - ./backend:/app
     environment:
       - DJANGO_SETTINGS_MODULE=backend.settings
       - DATABASE_URL=postgresql://nasa_user:T3mp0@!2025_N4S4_A1rQu4l1ty@db:5432/nasa_tempo_db
@@ -66,6 +78,23 @@ services:
         condition: service_healthy
       db:
         condition: service_healthy
+
+  # ===== FRONTEND REACT =====
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: tempo_frontend
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "3000:80"
+    depends_on:
+      - web
+    environment:
+      - NODE_ENV=production
 
 volumes:
   postgres_data:
