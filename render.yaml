@@ -1,0 +1,70 @@
+services:
+  # API Django
+  - type: web
+    name: nasa-tempo-api
+    env: docker
+    docker:
+      dockerfile: Dockerfile
+    plan: free
+    envVars:
+      - key: DEBUG
+        value: "0"
+      - key: DJANGO_SETTINGS_MODULE
+        value: backend.settings
+      - key: SECRET_KEY
+        value: "vl*!l+17p8xg@^s8kd0cq5ug2ogylivy#93k=gi^#aw1p^_ys1"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com,.render.com,localhost,127.0.0.1"
+      - fromService:
+          type: postgres
+          name: nasa-tempo-db
+          property: connectionString
+        key: DATABASE_URL
+      - fromService:
+          type: redis
+          name: nasa-tempo-redis
+          property: connectionString
+        key: CELERY_BROKER_URL
+    healthCheckPath: /api/health/
+    numInstances: 1
+
+  # Base de données PostgreSQL
+  - type: postgres
+    name: nasa-tempo-db
+    plan: free
+    ipAllowList: []
+    databaseName: nasa_tempo_db
+    user: nasa_user
+
+  # Redis
+  - type: redis
+    name: nasa-tempo-redis
+    plan: free
+    ipAllowList: []
+    maxmemoryPolicy: allkeys-lru
+
+  # Worker Celery
+  - type: worker
+    name: nasa-tempo-celery
+    env: docker
+    docker:
+      dockerfile: Dockerfile
+    plan: free
+    command: celery -A backend worker --loglevel=info --concurrency=2
+    envVars:
+      - key: DEBUG
+        value: "0"
+      - key: DJANGO_SETTINGS_MODULE
+        value: backend.settings
+      - key: SECRET_KEY
+        value: "vl*!l+17p8xg@^s8kd0cq5ug2ogylivy#93k=gi^#aw1p^_ys1"
+      - fromService:
+          type: postgres
+          name: nasa-tempo-db
+          property: connectionString
+        key: DATABASE_URL
+      - fromService:
+          type: redis
+          name: nasa-tempo-redis
+          property: connectionString
+        key: CELERY_BROKER_URL
