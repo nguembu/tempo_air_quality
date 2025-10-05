@@ -1,46 +1,50 @@
-FROM python:3.10-slim
+# ---- Étape 1 : Build ----
+FROM python:3.11-slim AS builder
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-ENV DJANGO_SETTINGS_MODULE=backend.settings
-
-# Install system dependencies
+# Installer dépendances système (GDAL, psycopg2, etc.)
 RUN apt-get update && apt-get install -y \
-    gcc \
-    gdal-bin \
-    libgdal-dev \
-    python3-gdal \
-    postgresql-client \
-    curl \
+    gdal-bin libgdal-dev gcc python3-dev curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Create and set work directory
+# Configurer le dossier de travail
 WORKDIR /app
 
-# Copy requirements first (for better caching)
+# Copier les fichiers de dépendances
 COPY requirements.txt .
 
-# Install Python dependencies
+# Installer les dépendances Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project
+# ---- Étape 2 : Runtime ----
+FROM python:3.11-slim
+
+# Créer un utilisateur non root
+RUN useradd -m appuser
+
+# Installer dépendances runtime minimales
+RUN apt-get update && apt-get install -y gdal-bin curl && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copier les fichiers depuis la phase de build
+COPY --from=builder /usr/local /usr/local
 COPY . .
 
-# Create static files directory and collect static files
-RUN mkdir -p /app/staticfiles
-RUN python manage.py collectstatic --noinput
+# Copier le script d’entrée
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# Create non-root user for security
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+# Variables d'environnement par défaut
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV DJANGO_SETTINGS_MODULE=backend.settings
+ENV PORT=8000
+
+# Healthcheck (Render ignore souvent mais utile localement)
+HEALTHCHECK CMD curl -f http://localhost:${PORT:-8000}/api/health/ || exit 1
+
+# Utilisateur non-root
 USER appuser
 
-# Expose port
-EXPOSE 8000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/api/health/ || exit 1
-
-# Run application
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--worker-class", "gthread", "--threads", "2", "backend.wsgi:application"]
+# Lancement de l’application
+ENTRYPOINT ["/entrypoint.sh"]
