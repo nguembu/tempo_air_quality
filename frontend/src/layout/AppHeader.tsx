@@ -54,12 +54,12 @@ const AppHeader: React.FC = () => {
               src="./images/logo/logo.svg"
               alt="Air Quality App"
             />*/}
-            <img
+            {/* <img
               className="hidden dark:block h-8"
               src="./images/logo/logo-dark.svg"
               alt="Air Quality App"
-            /> 
-            <h2 className="text-2xl font-semibold">Breezly</h2>
+            />  */}
+            <h2 className="text-2xl font-semibold dark:text-white">Breezly</h2>
           </Link>
         </div>
 
