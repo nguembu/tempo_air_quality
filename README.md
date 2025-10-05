@@ -396,7 +396,7 @@ tempo_air_quality/
 
 #### 1️⃣ Cloner le dépôt
 ```bash
-git clone https://github.com/ton-compte/tempo_air_quality.git
+git clone https://github.com/nguembu/tempo_air_quality
 cd tempo_air_quality
 ```
 
