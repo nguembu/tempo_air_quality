@@ -483,8 +483,8 @@ pytest
 
 ## 👥 Équipe de Développement
 
-| Nom | Rôle | Spécialité |
-|------|------|-------------|
+| Nom | Rôle | 
+|------|------|
 | **Jaures Nguembu** |  Développeur Backend,Tests, CI/CD |
 | **Morel Tchaptche** | Développeur Frontend|
 | **Steve Ndjeumou** | Data engineer |
