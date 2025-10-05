@@ -464,9 +464,9 @@ docker compose -f docker-compose.prod.yml down
 
 | Endpoint | Méthode | Description |
 |-----------|----------|--------------|
-| `/api/stations/` | GET | Liste les stations de mesure |
-| `/api/airdata/` | GET | Données de qualité de l’air en temps réel |
-| `/api/airdata/stats/` | GET | Statistiques agrégées |
+| `/api/tempo/` | GET | Liste les stations de mesure |
+| `/api/airquality/` | GET | Données de qualité de l’air en temps réel |
+| `/api/airdata/predict/` | GET | Statistiques agrégées |
 | `/api/users/register/` | POST | Inscription utilisateur |
 | `/api/users/login/` | POST | Authentification JWT |
 
